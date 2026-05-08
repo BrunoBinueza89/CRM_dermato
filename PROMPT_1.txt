@@ -1,0 +1,18 @@
+Leia o arquivo PLANS.md inteiro antes de fazer qualquer alteração.
+
+Trate o PLANS.md como um documento vivo de execução do projeto.
+
+Execute o máximo possível dos itens pendentes em Concrete Steps e demais seções do documento.
+
+
+Não finalize apenas explicando o que faria.
+Implemente o que for possível agora.
+
+Ao final, me entregue um resumo objetivo contendo:
+
+1. O que foi concluído
+2. O que ficou pendente
+3. Quais arquivos foram alterados
+4. Quais comandos foram executados
+5. Quais commits foram criados
+6. Próximo passo recomendado

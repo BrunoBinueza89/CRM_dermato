@@ -1,0 +1,31 @@
+Leia o arquivo PLANS.md inteiro antes de fazer qualquer alteração.
+
+Trate o PLANS.md como um documento vivo de execução do projeto.
+
+Execute o máximo possível dos itens pendentes em Progress, seguindo
+Purpose / Big Picture, Context and Orientation, Plan of Work,
+Concrete Steps, Validation and Acceptance, Interfaces and Dependencies
+e demais seções do documento.
+
+Durante a execução:
+
+- Não ignore itens pendentes de Progress.
+- Atualize o próprio PLANS.md conforme avançar.
+- Marque como [x] apenas o que foi realmente concluído.
+- Registre decisões importantes em Decision Log.
+- Registre problemas, descobertas e inconsistências em Surprises & Discoveries.
+- Registre arquivos alterados, comandos usados e observações em Artifacts and Notes.
+- Valide o que for possível conforme Validation and Acceptance.
+- Faça commits no Git ao concluir etapas relevantes, usando mensagens claras.
+
+Não finalize apenas explicando o que faria.
+Implemente o que for possível agora.
+
+Ao final, me entregue um resumo objetivo contendo:
+
+1. O que foi concluído
+2. O que ficou pendente
+3. Quais arquivos foram alterados
+4. Quais comandos foram executados
+5. Quais commits foram criados
+6. Próximo passo recomendado

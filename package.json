@@ -1,0 +1,24 @@
+{
+  "name": "prototipo-clinica2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "migrate": "node backend/scripts/run-migrations.js",
+    "validate:migrations": "node backend/scripts/validate-migrations.js",
+    "frontend:serve": "node backend/scripts/serve-frontend.js",
+    "smoke:test": "node backend/scripts/smoke-test.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mysql2": "^3.22.0"
+  }
+}
