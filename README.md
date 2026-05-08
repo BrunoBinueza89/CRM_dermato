@@ -1,4 +1,6 @@
-# Clinica Dermato CRM (Protótipo)
+# CRM Dermato (Protótipo)
+
+Repositório: `BrunoBinueza89/CRM_dermato`
 
 ## Visão geral
 
