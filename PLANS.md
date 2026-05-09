@@ -150,6 +150,7 @@ O sistema deve ter telas parecidas com as imagens da pasta screens, mantendo boa
   - Frontend: `frontend/js/pageTemplates.js`, `frontend/js/views/dashboardView.js`, `frontend/styles.css` (topbar + layout do dashboard)
   - Frontend (CDN): `frontend/{index,agenda,equipe,estoque,faturamento,pacientes,relatorios,tratamentos}.html` (Bootstrap Icons)
   - Assets: `screens/dashboard_01.png`
+  - Commit: `6cad29e` (Dashboard: alinhar UI ao screens e adicionar alertas de estoque)
 - 2026-05-09: Comandos executados:
   - `npm run smoke:test` (OK)
 - 2026-05-06: Backend movido para `backend/` (inclui `backend/app.js`, `backend/server.js`, `backend/connection.js`, `backend/src/*`, `backend/scripts/*`, `backend/migrations.sql`, `backend/seeders.sql`).
