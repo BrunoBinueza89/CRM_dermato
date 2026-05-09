@@ -1,48 +1,65 @@
 function shell({ pageTitle, pageSubtitle, activeRoute, pageClass = "", content }) {
   return `
     <div class="app">
+      <header class="topbar" role="banner">
+        <div class="topbar__left">
+          <div class="topbar__logo" aria-hidden="true"></div>
+          <div class="topbar__brand">Dermato CRM</div>
+          <div class="topbar__search">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input id="globalSearch" type="search" placeholder="Search" aria-label="Buscar" />
+          </div>
+        </div>
+        <div class="topbar__right">
+          <div class="topbar__user">
+            <span class="topbar__user-name" id="topbarUserName">Usuário</span>
+            <div class="topbar__avatar" aria-hidden="true"></div>
+          </div>
+        </div>
+      </header>
+
       <aside class="sidebar" data-state="expanded">
         <div class="sidebar__top">
           <button class="btn btn--icon" id="sidebarToggle" type="button" aria-label="Alternar sidebar">
-            ==
+            <i class="bi bi-list" aria-hidden="true"></i>
           </button>
           <div class="sidebar__brand">
-            <div class="brand__title">Clinica Dermato CRM</div>
-            <div class="brand__subtitle">Frontend</div>
+            <div class="brand__title">Clinic CRM</div>
+            <div class="brand__subtitle">Gestão</div>
           </div>
         </div>
 
         <nav class="sidebar__nav" aria-label="Navegacao">
           <a class="nav__item" href="./index.html" data-route="/dashboard">
-            <span class="nav__icon">DS</span>
+            <span class="nav__icon"><i class="bi bi-house" aria-hidden="true"></i></span>
             <span class="nav__label">Dashboard</span>
           </a>
-          <a class="nav__item" href="./equipe.html" data-route="/equipe">
-            <span class="nav__icon">EQ</span>
-            <span class="nav__label">Equipe</span>
-          </a>
           <a class="nav__item" href="./pacientes.html" data-route="/pacientes">
-            <span class="nav__icon">PC</span>
+            <span class="nav__icon"><i class="bi bi-person" aria-hidden="true"></i></span>
             <span class="nav__label">Pacientes</span>
           </a>
           <a class="nav__item" href="./agenda.html" data-route="/agenda">
-            <span class="nav__icon">AG</span>
-            <span class="nav__label">Agenda</span>
+            <span class="nav__icon"><i class="bi bi-calendar-event" aria-hidden="true"></i></span>
+            <span class="nav__label">Consultas</span>
           </a>
           <a class="nav__item" href="./tratamentos.html" data-route="/tratamentos">
-            <span class="nav__icon">TR</span>
-            <span class="nav__label">Tratamentos</span>
+            <span class="nav__icon"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i></span>
+            <span class="nav__label">Tratamento</span>
           </a>
           <a class="nav__item" href="./faturamento.html" data-route="/faturamento">
-            <span class="nav__icon">FT</span>
+            <span class="nav__icon"><i class="bi bi-cash-coin" aria-hidden="true"></i></span>
             <span class="nav__label">Faturamento</span>
           </a>
+          <a class="nav__item" href="./equipe.html" data-route="/equipe">
+            <span class="nav__icon"><i class="bi bi-people" aria-hidden="true"></i></span>
+            <span class="nav__label">Equipe</span>
+          </a>
           <a class="nav__item" href="./relatorios.html" data-route="/relatorios">
-            <span class="nav__icon">RL</span>
+            <span class="nav__icon"><i class="bi bi-bar-chart" aria-hidden="true"></i></span>
             <span class="nav__label">Relatorios</span>
           </a>
           <a class="nav__item" href="./estoque.html" data-route="/estoque">
-            <span class="nav__icon">ET</span>
+            <span class="nav__icon"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
             <span class="nav__label">Estoque</span>
           </a>
         </nav>
@@ -53,7 +70,7 @@ function shell({ pageTitle, pageSubtitle, activeRoute, pageClass = "", content }
       </aside>
 
       <main class="content">
-        <header class="content__header">
+        <header class="content__header ${activeRoute === "/dashboard" ? "is-hidden" : ""}">
           <div>
             <h1 class="content__title" id="pageTitle">${pageTitle}</h1>
             <div class="content__subtitle" id="pageSubtitle">${pageSubtitle}</div>
@@ -86,7 +103,7 @@ export function renderPageTemplate(page) {
 
 registerPageTemplate("dashboard", () => ({
   pageTitle: "Dashboard",
-  pageSubtitle: "Indicadores, agenda do dia e pacientes recentes",
+  pageSubtitle: "Indicadores e agenda do dia",
   activeRoute: "/dashboard",
   pageClass: "dashboard",
   content: `
@@ -94,34 +111,34 @@ registerPageTemplate("dashboard", () => ({
       <div class="alert alert--error is-hidden" id="dashboardErrorBox"></div>
       <div class="dashboard__loading" id="dashboardLoading">Carregando dashboard...</div>
       <div class="dashboard__content is-hidden" id="dashboardContent">
-        <section class="dashboard__kpis" id="dashboardKpis"></section>
-        <div class="dashboard__grid">
-          <section class="card">
+        <section class="dashboard__kpis dashboard__kpis--hero" id="dashboardKpis"></section>
+
+        <div class="dashboard__grid dashboard__grid--hero">
+          <section class="card dashboard-card">
             <div class="card__header">
               <div>
-                <strong>Consultas na semana</strong>
-                <div class="muted">Ultimos 7 dias</div>
+                <strong>Consultas Semanais</strong>
               </div>
             </div>
             <div class="card__body">
-              <div class="weekly-chart" id="weeklyChart"></div>
+              <div class="weekly-chart weekly-chart--hero" id="weeklyChart"></div>
             </div>
           </section>
-          <section class="card">
+
+          <section class="card dashboard-card">
             <div class="card__header">
               <div>
-                <strong>Pacientes recentes</strong>
-                <div class="muted">Cadastros mais novos</div>
+                <strong>Alerta de Estoque</strong>
               </div>
             </div>
-            <div class="card__body" id="recentPatients"></div>
+            <div class="card__body" id="stockAlerts"></div>
           </section>
         </div>
-        <section class="card">
+
+        <section class="card dashboard-card">
           <div class="card__header">
             <div>
-              <strong>Consultas de hoje</strong>
-              <div class="muted">Agenda consolidada do dia</div>
+              <strong>Atendimentos Hoje</strong>
             </div>
           </div>
           <div class="card__body" id="todayAppointments"></div>

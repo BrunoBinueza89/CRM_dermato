@@ -17,6 +17,17 @@ function formatLabel(date) {
   }).format(date);
 }
 
+function safePercentChange(currentValue, previousValue) {
+  const current = Number(currentValue || 0);
+  const previous = Number(previousValue || 0);
+  if (!Number.isFinite(current) || !Number.isFinite(previous)) return 0;
+  if (previous === 0) {
+    if (current === 0) return 0;
+    return 100;
+  }
+  return ((current - previous) / previous) * 100;
+}
+
 async function overview(req, res) {
   try {
     const [kpiRows] = await pool.query(
@@ -38,6 +49,53 @@ SELECT
       AND data_hora < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
       AND status = 'cancelada'
   ) AS canceladasSemana
+      `.trim()
+    );
+
+    const [monthlyRevenueRows] = await pool.query(
+      `
+SELECT
+  (
+    SELECT COALESCE(SUM(valor_total), 0)
+    FROM faturamento
+    WHERE status = 'paga'
+      AND YEAR(data_emissao) = YEAR(CURDATE())
+      AND MONTH(data_emissao) = MONTH(CURDATE())
+  ) AS receitaMensal,
+  (
+    SELECT COALESCE(SUM(valor_total), 0)
+    FROM faturamento
+    WHERE status = 'paga'
+      AND YEAR(data_emissao) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+      AND MONTH(data_emissao) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+  ) AS receitaMensalAnterior
+      `.trim()
+    );
+
+    const [pendingTreatmentsRows] = await pool.query(
+      `
+SELECT
+  (SELECT COUNT(*) FROM tratamentos WHERE status = 'ativo') AS tratamentosPendentes,
+  (
+    SELECT COUNT(*)
+    FROM tratamentos
+    WHERE status = 'ativo'
+      AND created_at >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+  ) AS tratamentosNovosMes
+      `.trim()
+    );
+
+    const [stockAlertsRows] = await pool.query(
+      `
+SELECT
+  ie.id,
+  ie.nome,
+  ie.quantidade,
+  ie.quantidade_minima
+FROM itens_estoque ie
+WHERE ie.quantidade <= COALESCE(ie.quantidade_minima, 0)
+ORDER BY (ie.quantidade <= 0) DESC, ie.quantidade ASC, ie.id ASC
+LIMIT 6;
       `.trim()
     );
 
@@ -123,6 +181,13 @@ LIMIT 6;
       };
     });
 
+    const receitaMensal = Number(monthlyRevenueRows[0]?.receitaMensal || 0);
+    const receitaMensalAnterior = Number(monthlyRevenueRows[0]?.receitaMensalAnterior || 0);
+    const receitaMensalDelta = safePercentChange(receitaMensal, receitaMensalAnterior);
+
+    const tratamentosPendentes = Number(pendingTreatmentsRows[0]?.tratamentosPendentes || 0);
+    const tratamentosNovosMes = Number(pendingTreatmentsRows[0]?.tratamentosNovosMes || 0);
+
     res.status(200).json({
       generatedAt: new Date().toISOString(),
       kpis: {
@@ -130,6 +195,24 @@ LIMIT 6;
         consultasHoje: Number(kpiRows[0]?.consultasHoje || 0),
         realizadasSemana: Number(kpiRows[0]?.realizadasSemana || 0),
         canceladasSemana: Number(kpiRows[0]?.canceladasSemana || 0),
+      },
+      kpisV2: {
+        consultasHoje: {
+          value: Number(kpiRows[0]?.consultasHoje || 0),
+          deltaPercent: null,
+          periodLabel: "hoje",
+        },
+        receitaMensal: {
+          value: receitaMensal,
+          deltaPercent: Number.isFinite(receitaMensalDelta) ? Math.round(receitaMensalDelta * 10) / 10 : 0,
+          periodLabel: "este mês",
+        },
+        tratamentosPendentes: {
+          value: tratamentosPendentes,
+          deltaPercent: null,
+          periodLabel: "ativos",
+          hint: tratamentosNovosMes > 0 ? `${tratamentosNovosMes} novos no último mês` : null,
+        },
       },
       weeklyAppointments,
       todayAppointments: todayAppointments.map((item) => ({
@@ -148,6 +231,19 @@ LIMIT 6;
         status: item.status,
         createdAt: item.created_at,
       })),
+      stockAlerts: stockAlertsRows.map((item) => {
+        const qty = Number(item.quantidade || 0);
+        const min = Number(item.quantidade_minima || 0);
+        const level = qty <= 0 ? "em_falta" : "baixo";
+
+        return {
+          id: item.id,
+          name: item.nome,
+          quantity: qty,
+          minimum: min,
+          level,
+        };
+      }),
     });
   } catch (error) {
     sendError(res, 500, "Erro ao carregar dashboard.", error?.message);

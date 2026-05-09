@@ -106,7 +106,7 @@ Quando exceder:
 
 ## Dashboard
 
-- `GET /dashboard` -> `{ kpis, weeklyAppointments, todayAppointments, recentPatients }`
+- `GET /dashboard` -> `{ kpis, kpisV2, weeklyAppointments, todayAppointments, recentPatients, stockAlerts }`
 
 ## Equipe
 
@@ -178,4 +178,3 @@ Quando exceder:
 - `PUT /estoque/itens/:id` -> atualiza item
   - body: `{ estoque_id, nome, unidade?, quantidade, quantidade_minima, custo_unitario, validade? }`
 - `DELETE /estoque/itens/:id` -> 204
-

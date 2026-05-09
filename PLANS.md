@@ -36,6 +36,7 @@ O sistema é estruturado em módulos independentes porém integrados, acessívei
 - [x] Terminar backend (checklist abaixo)
 - [x] Terminar frontend (checklist abaixo)
 - [x] Corrigir cores do design
+- [x] Implementar design e funcionalidades baseado no arquivo em screens
 
 ### Checklist - Terminar backend
 - [x] Padronizar erros: formato consistente `{ message, details? }` e status codes por caso
@@ -53,6 +54,7 @@ O sistema é estruturado em módulos independentes porém integrados, acessívei
 ## Surprises & Discoveries
 - 2026-05-06: `git` não está disponível neste ambiente (não foi possível criar commits aqui).
 - 2026-05-06: Não existe pasta `.git` neste workspace (não é um repositório Git aqui).
+- 2026-05-09: `git` está disponível e existe `.git/` neste workspace (commits voltaram a ser possíveis).
 - 2026-05-06: `migrations.sql` cria/usa `clinica_dermato_crm2`, mas o script de migrate estava tentando conectar em um DB diferente por padrão (ajustado).
 - 2026-05-06: `backend/migrations.sql` define o nome do banco dentro do próprio SQL (`CREATE DATABASE`/`USE`), então alterar apenas `DB_NAME` pode não ter efeito sem ajustar o arquivo.
 - 2026-05-06: `Invoke-WebRequest` no PowerShell exigiu `-UseBasicParsing` neste ambiente (IE DOM indisponível).
@@ -78,6 +80,7 @@ O sistema é estruturado em módulos independentes porém integrados, acessívei
 - 2026-05-06: UI de Faturamento ganhou criação de faturas via modal (paciente → tratamentos do paciente) usando `POST /faturamento`.
 - 2026-05-06: UI de Faturamento ganhou remoção de faturas via `DELETE /faturamento/:id`.
 - 2026-05-08: Paleta do frontend alinhada ao `design.md` via variáveis CSS (`--primary`/`--secondary`) e substituição de cores hardcoded por `rgba(var(--primary-rgb), …)` em componentes principais.
+- 2026-05-09: Dashboard alinhado ao `screens/dashboard_01.png`: adicionados `topbar` e novo layout de KPIs/gráfico/alerta de estoque; backend `/dashboard` ganhou `kpisV2` e `stockAlerts` para suportar a nova UI.
 
 ## Outcomes & Retrospective
 - Não foi registrado nada
@@ -89,6 +92,8 @@ O projeto já foi iniciado, existe algumas páginas e tabelas. Agora o objetivo 
 O projeto deve avançar para uma estrutura profissional separando frontend de backend.
 
 Para corrigir as cores do sistema utilize o arquivo design.md
+
+O sistema deve ter telas parecidas com as imagens da pasta screens, mantendo boa experiência em telas menores.
 
 ## Concrete Steps
 - [x] Mover backend para `backend/` (código, scripts e SQL)
@@ -139,6 +144,14 @@ Para corrigir as cores do sistema utilize o arquivo design.md
 - Não foi registrado nada
 
 ## Artifacts and Notes
+- 2026-05-09: Dashboard alinhado ao `screens/dashboard_01.png`:
+  - Backend: `backend/src/controller/dashboardController.js` (adiciona `kpisV2` + `stockAlerts` no `GET /dashboard`)
+  - Docs: `API.md` (atualiza shape do `GET /dashboard`)
+  - Frontend: `frontend/js/pageTemplates.js`, `frontend/js/views/dashboardView.js`, `frontend/styles.css` (topbar + layout do dashboard)
+  - Frontend (CDN): `frontend/{index,agenda,equipe,estoque,faturamento,pacientes,relatorios,tratamentos}.html` (Bootstrap Icons)
+  - Assets: `screens/dashboard_01.png`
+- 2026-05-09: Comandos executados:
+  - `npm run smoke:test` (OK)
 - 2026-05-06: Backend movido para `backend/` (inclui `backend/app.js`, `backend/server.js`, `backend/connection.js`, `backend/src/*`, `backend/scripts/*`, `backend/migrations.sql`, `backend/seeders.sql`).
 - 2026-05-06: `package.json` atualizado para usar scripts `backend/*`.
 - 2026-05-06: `INSTRUCOES_EXECUCAO.md` atualizado para refletir a nova estrutura e DB padrão (`clinica_dermato_crm2`).

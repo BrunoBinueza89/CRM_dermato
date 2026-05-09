@@ -4,11 +4,6 @@ function el(id) {
   return document.getElementById(id);
 }
 
-function formatDate(value) {
-  if (!value) return "-";
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium" }).format(new Date(value));
-}
-
 function clearError() {
   const box = el("dashboardErrorBox");
   if (!box) return;
@@ -30,46 +25,86 @@ function setLoading(isLoading) {
   content?.classList.toggle("is-hidden", isLoading);
 }
 
-function renderKpis(kpis) {
+function formatCurrency(value) {
+  const number = Number(value || 0);
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 0,
+  }).format(number);
+}
+
+function formatCurrencyCompact(value) {
+  const number = Number(value || 0);
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(number);
+}
+
+function renderKpis(payload) {
   const container = el("dashboardKpis");
   if (!container) return;
 
+  const kpisV2 = payload?.kpisV2 || null;
+  const fallback = payload?.kpis || {};
+
   const items = [
     {
-      label: "Pacientes ativos",
-      value: kpis?.pacientesAtivos ?? 0,
-      hint: "Base atual de pacientes em acompanhamento",
-      tone: "info",
+      key: "consultasHoje",
+      label: "Consultas Hoje",
+      icon: "bi-calendar-check",
+      value: kpisV2?.consultasHoje?.value ?? fallback?.consultasHoje ?? 0,
+      formatter: (v) => String(v),
     },
     {
-      label: "Consultas hoje",
-      value: kpis?.consultasHoje ?? 0,
-      hint: "Compromissos marcados para o dia",
-      tone: "warning",
+      key: "receitaMensal",
+      label: "Receita Mensal",
+      icon: "bi-currency-dollar",
+      value: kpisV2?.receitaMensal?.value ?? 0,
+      formatter: (v) => formatCurrencyCompact(v),
     },
     {
-      label: "Realizadas na semana",
-      value: kpis?.realizadasSemana ?? 0,
-      hint: "Atendimentos concluidos nos ultimos 7 dias",
-      tone: "success",
-    },
-    {
-      label: "Canceladas na semana",
-      value: kpis?.canceladasSemana ?? 0,
-      hint: "Consultas perdidas ou remarcadas recentemente",
-      tone: "danger",
+      key: "tratamentosPendentes",
+      label: "Tratamento Pendente",
+      icon: "bi-journal-medical",
+      value: kpisV2?.tratamentosPendentes?.value ?? 0,
+      formatter: (v) => String(v),
     },
   ];
 
   container.innerHTML = items
     .map(
-      (item) => `
-        <article class="kpi-card kpi-card--${item.tone}">
-          <span class="kpi-card__label">${item.label}</span>
-          <span class="kpi-card__value">${item.value}</span>
-          <span class="kpi-card__hint">${item.hint}</span>
+      (item) => {
+        const meta = kpisV2?.[item.key] || null;
+        const deltaPercent = typeof meta?.deltaPercent === "number" ? meta.deltaPercent : null;
+        const periodLabel = meta?.periodLabel || "";
+
+        return `
+        <article class="kpi-hero">
+          <div class="kpi-hero__icon">
+            <i class="bi ${item.icon}" aria-hidden="true"></i>
+          </div>
+          <div class="kpi-hero__body">
+            <div class="kpi-hero__label">${item.label}</div>
+            <div class="kpi-hero__value">${item.formatter(item.value)}</div>
+            <div class="kpi-hero__meta">
+              ${
+                typeof deltaPercent === "number"
+                  ? `<span class="kpi-hero__delta ${deltaPercent >= 0 ? "is-up" : "is-down"}">
+                      <i class="bi ${deltaPercent >= 0 ? "bi-arrow-up" : "bi-arrow-down"}" aria-hidden="true"></i>
+                      ${Math.abs(deltaPercent)}%
+                    </span>`
+                  : `<span class="kpi-hero__delta is-muted">—</span>`
+              }
+              <span class="kpi-hero__period">${periodLabel}</span>
+            </div>
+          </div>
         </article>
-      `.trim()
+      `.trim();
+      }
     )
     .join("");
 }
@@ -84,20 +119,20 @@ function renderWeeklyChart(rows) {
   }
 
   const max = Math.max(...rows.map((row) => Number(row.total || 0)), 1);
+  const maxIndex = rows.findIndex((row) => Number(row.total || 0) === max);
 
   container.innerHTML = rows
-    .map((row) => {
+    .map((row, index) => {
       const total = Number(row.total || 0);
       const height = Math.max((total / max) * 100, total > 0 ? 14 : 6);
 
       return `
         <div class="weekly-chart__col">
           <div class="weekly-chart__bar-wrap" title="${row.label}: ${total} consultas">
-            <div class="weekly-chart__bar" style="height:${height}%"></div>
+            <div class="weekly-chart__bar ${index === maxIndex ? "is-peak" : ""}" style="height:${height}%"></div>
           </div>
           <div class="weekly-chart__meta">
-            <span class="weekly-chart__value">${total}</span>
-            <span class="weekly-chart__label">${row.label}</span>
+            <span class="weekly-chart__label">${String(row.label || "").split(" ")[0]}</span>
           </div>
         </div>
       `.trim();
@@ -119,10 +154,10 @@ function renderTodayAppointments(rows) {
       <table class="table appointments-table">
         <thead>
           <tr>
-            <th>Horario</th>
             <th>Paciente</th>
+            <th>Horario</th>
             <th>Profissional</th>
-            <th>Descricao</th>
+            <th>Procedimento</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -136,8 +171,8 @@ function renderTodayAppointments(rows) {
 
               return `
                 <tr>
-                  <td>${time}</td>
                   <td>${row.patientName || "-"}</td>
+                  <td>${time}</td>
                   <td>${row.professionalName || "-"}</td>
                   <td>${row.description || "-"}</td>
                   <td><span class="status-badge status-badge--${row.status}">${row.status || "-"}</span></td>
@@ -151,32 +186,31 @@ function renderTodayAppointments(rows) {
   `;
 }
 
-function renderRecentPatients(rows) {
-  const container = el("recentPatients");
+function renderStockAlerts(rows) {
+  const container = el("stockAlerts");
   if (!container) return;
 
   if (!Array.isArray(rows) || rows.length === 0) {
-    container.innerHTML = '<div class="list-empty">Nenhum paciente cadastrado ate o momento.</div>';
+    container.innerHTML = '<div class="list-empty">Nenhum item abaixo do mínimo.</div>';
     return;
   }
 
   container.innerHTML = `
-    <div class="recent-list">
+    <div class="stock-alerts">
       ${rows
-        .map(
-          (row) => `
-            <article class="recent-list__item">
-              <div class="recent-list__top">
-                <div class="recent-list__name">${row.name || "-"}</div>
-                <span class="status-badge status-badge--${row.status}">${row.status || "-"}</span>
-              </div>
-              <div class="recent-list__meta">
-                <span>${row.email || row.phone || "Sem contato informado"}</span>
-                <span>${formatDate(row.createdAt)}</span>
-              </div>
-            </article>
-          `.trim()
-        )
+        .map((row) => {
+          const level = row.level === "em_falta" ? "em_falta" : "baixo";
+          const badgeText = level === "em_falta" ? "Em falta" : "Baixo";
+          const badgeClass = level === "em_falta" ? "danger" : "warning";
+
+          return `
+            <div class="stock-alerts__row">
+              <span class="pill pill--${badgeClass}">${badgeText}</span>
+              <span class="stock-alerts__name">${row.name || "-"}</span>
+              <span class="stock-alerts__qty">${Number(row.quantity || 0)} / ${Number(row.minimum || 0)}</span>
+            </div>
+          `.trim();
+        })
         .join("")}
     </div>
   `;
@@ -188,10 +222,10 @@ export async function loadDashboard() {
 
   try {
     const payload = await api.get("/dashboard");
-    renderKpis(payload?.kpis || {});
+    renderKpis(payload);
     renderWeeklyChart(Array.isArray(payload?.weeklyAppointments) ? payload.weeklyAppointments : []);
     renderTodayAppointments(Array.isArray(payload?.todayAppointments) ? payload.todayAppointments : []);
-    renderRecentPatients(Array.isArray(payload?.recentPatients) ? payload.recentPatients : []);
+    renderStockAlerts(Array.isArray(payload?.stockAlerts) ? payload.stockAlerts : []);
   } catch (error) {
     showError(error?.message || "Erro ao carregar dashboard.");
   } finally {
