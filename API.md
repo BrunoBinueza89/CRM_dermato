@@ -123,6 +123,7 @@ Quando exceder:
 
 - `GET /pacientes?search=&status=` -> lista
 - `GET /pacientes?search=&status=&page=1&pageSize=20` -> `{ data, pagination }`
+  - campos extras na lista: `ultima_consulta` (max `data_hora` realizada no passado) e `proxima_consulta` (min `data_hora` agendada no futuro)
 - `GET /pacientes/:id` -> paciente
 - `POST /pacientes` -> cria
   - body: `{ nome, email?, telefone?, data_nascimento?, status, observacoes? }`

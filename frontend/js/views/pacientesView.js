@@ -5,15 +5,20 @@ function el(id) {
   return document.getElementById(id);
 }
 
+function getCreateModalInstance() {
+  const modalElement = el("newPatientModal");
+  if (!modalElement || !globalThis.bootstrap?.Modal) return null;
+  return globalThis.bootstrap.Modal.getOrCreateInstance(modalElement);
+}
+
 function getListElements() {
   return {
     searchInput: el("patientSearchInput"),
-    statusSelect: el("patientStatusSelect"),
     searchButton: el("patientSearchButton"),
     clearButton: el("patientClearButton"),
     refreshButton: el("refreshButton"),
     errorBox: el("patientsErrorBox"),
-    tableBody: el("patientsTableBody"),
+    cards: el("patientsCards"),
     emptyState: el("patientsEmptyState"),
     pager: el("patientsPager"),
     pagerPrev: el("patientsPagerPrev"),
@@ -104,13 +109,11 @@ let lastPagination = null;
 let isLoadingList = false;
 
 function setListLoading(isLoading) {
-  const { searchButton, clearButton, refreshButton, searchInput, statusSelect, emptyState } = getListElements();
+  const { searchButton, refreshButton, searchInput, emptyState } = getListElements();
   isLoadingList = isLoading;
   if (searchButton) searchButton.disabled = isLoading;
-  if (clearButton) clearButton.disabled = isLoading;
   if (refreshButton) refreshButton.disabled = isLoading;
   if (searchInput) searchInput.disabled = isLoading;
-  if (statusSelect) statusSelect.disabled = isLoading;
 
   if (isLoading && emptyState) {
     emptyState.textContent = "Carregando pacientes...";
@@ -154,10 +157,10 @@ function renderPager(pagination) {
 }
 
 function renderRows(rows, pagination) {
-  const { tableBody, emptyState } = getListElements();
-  if (!tableBody || !emptyState) return;
+  const { cards, emptyState } = getListElements();
+  if (!cards || !emptyState) return;
 
-  tableBody.innerHTML = "";
+  cards.innerHTML = "";
 
   if (!Array.isArray(rows) || rows.length === 0) {
     emptyState.classList.remove("is-hidden");
@@ -168,31 +171,94 @@ function renderRows(rows, pagination) {
   emptyState.classList.add("is-hidden");
   renderPager(pagination);
 
+  const formatDate = (value) => {
+    if (!value) return "-";
+    return new Intl.DateTimeFormat("pt-BR").format(new Date(value));
+  };
+
+  const getAgeText = (value) => {
+    if (!value) return "";
+    const date = new Date(String(value).slice(0, 10));
+    if (Number.isNaN(date.getTime())) return "";
+    const now = new Date();
+    let age = now.getFullYear() - date.getFullYear();
+    const m = now.getMonth() - date.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < date.getDate())) age -= 1;
+    if (age < 0 || age > 120) return "";
+    return `${age} anos`;
+  };
+
   for (const row of rows) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${row.id ?? ""}</td>
-      <td>${row.nome ?? ""}</td>
-      <td>${row.email ?? "-"}</td>
-      <td>${row.telefone ?? "-"}</td>
-      <td><span class="status-badge status-badge--${row.status}">${row.status ?? "-"}</span></td>
-      <td>
-        <button class="btn btn--ghost btn--small" type="button" data-profile-id="${row.id}">Ver perfil</button>
-      </td>
+    const status = row.status === "inativo" ? "inativo" : "ativo";
+    const ageText = getAgeText(row.data_nascimento);
+    const subtitle = [ageText].filter(Boolean).join(" • ");
+
+    const card = document.createElement("article");
+    card.className = "patient-card";
+    card.innerHTML = `
+      <div class="patient-card__top">
+        <div class="patient-card__avatar"><i class="bi bi-person" aria-hidden="true"></i></div>
+        <div class="patient-card__head">
+          <div class="patient-card__name">${row.nome ?? "-"}</div>
+          <div class="patient-card__sub">${subtitle || " "}</div>
+        </div>
+        <span class="pill pill--${status === "ativo" ? "success" : "muted"}">${status === "ativo" ? "Ativo" : "Inativo"}</span>
+      </div>
+
+      <div class="patient-card__contacts">
+        <div class="patient-card__contact"><i class="bi bi-envelope" aria-hidden="true"></i> <span>${row.email ?? "-"}</span></div>
+        <div class="patient-card__contact"><i class="bi bi-telephone" aria-hidden="true"></i> <span>${row.telefone ?? "-"}</span></div>
+      </div>
+
+      <div class="patient-card__dates">
+        <div class="patient-card__date">
+          <div class="patient-card__date-label">Ultima consulta:</div>
+          <div class="patient-card__date-value">${formatDate(row.ultima_consulta)}</div>
+        </div>
+        <div class="patient-card__date">
+          <div class="patient-card__date-label">Proxima consulta:</div>
+          <div class="patient-card__date-value">${formatDate(row.proxima_consulta)}</div>
+        </div>
+      </div>
+
+      <div class="patient-card__actions">
+        <button class="btn btn--small" type="button" data-edit-id="${row.id}">Editar</button>
+        <button class="btn btn--danger btn--small" type="button" data-remove-id="${row.id}">Deletar</button>
+      </div>
     `.trim();
-    tableBody.appendChild(tr);
+
+    cards.appendChild(card);
   }
 
-  tableBody.querySelectorAll("[data-profile-id]").forEach((button) => {
+  cards.querySelectorAll("[data-edit-id]").forEach((button) => {
     button.onclick = () => {
-      const id = button.getAttribute("data-profile-id");
+      const id = button.getAttribute("data-edit-id");
+      if (!id) return;
       globalThis.location.hash = `#/pacientes/${id}`;
+    };
+  });
+
+  cards.querySelectorAll("[data-remove-id]").forEach((button) => {
+    button.onclick = async () => {
+      const id = button.getAttribute("data-remove-id");
+      if (!id) return;
+      const confirmed = globalThis.confirm("Deseja remover este paciente?");
+      if (!confirmed) return;
+      try {
+        await api.del(`/pacientes/${id}`);
+        await loadPacientes();
+        toast.success("Paciente removido.");
+      } catch (error) {
+        const { errorBox } = getListElements();
+        setError(errorBox, error?.message || "Erro ao remover paciente.");
+        toast.error(error?.message || "Erro ao remover paciente.");
+      }
     };
   });
 }
 
 export async function loadPacientes() {
-  const { searchInput, statusSelect, errorBox } = getListElements();
+  const { searchInput, errorBox } = getListElements();
   clearError(errorBox);
   setListLoading(true);
 
@@ -200,7 +266,6 @@ export async function loadPacientes() {
     const payload = await api.get("/pacientes", {
       query: {
         search: searchInput?.value.trim() || "",
-        status: statusSelect?.value || "",
         page: String(currentPage),
         pageSize: String(pageSize),
       },
@@ -237,6 +302,7 @@ async function createPaciente(event) {
     if (statusField) statusField.value = "ativo";
     await loadPacientes();
     toast.success("Paciente cadastrado.");
+    getCreateModalInstance()?.hide();
     if (created?.id) globalThis.location.hash = `#/pacientes/${created.id}`;
   } catch (error) {
     setError(formError, error?.message || "Erro ao cadastrar paciente.");
@@ -345,13 +411,12 @@ export async function loadPacientePerfil() {
 export function initPacientesView() {
   const {
     searchButton,
-    clearButton,
     refreshButton,
     searchInput,
-    statusSelect,
     form,
     pagerPrev,
     pagerNext,
+    formError,
   } = getListElements();
 
   const run = () => loadPacientes();
@@ -369,19 +434,18 @@ export function initPacientesView() {
       }
     };
   }
-  if (statusSelect) statusSelect.onchange = () => {
-    currentPage = 1;
-    run();
-  };
-  if (clearButton) {
-    clearButton.onclick = () => {
-      if (searchInput) searchInput.value = "";
-      if (statusSelect) statusSelect.value = "";
-      currentPage = 1;
-      run();
-    };
-  }
   if (form) form.onsubmit = createPaciente;
+
+  const modalElement = el("newPatientModal");
+  if (modalElement && modalElement.dataset.boundModal !== "true") {
+    modalElement.addEventListener("hidden.bs.modal", () => {
+      clearError(formError);
+      form?.reset();
+      const statusField = el("patientCreateStatus");
+      if (statusField) statusField.value = "ativo";
+    });
+    modalElement.dataset.boundModal = "true";
+  }
 
   if (pagerPrev) {
     pagerPrev.onclick = () => {

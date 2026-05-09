@@ -259,101 +259,91 @@ registerPageTemplate("equipe", () => ({
 
 registerPageTemplate("pacientes", () => ({
   pageTitle: "Pacientes",
-  pageSubtitle: "Busca, cadastro e acesso ao perfil",
+  pageSubtitle: "Gerenciamento de pacientes",
   activeRoute: "/pacientes",
   content: `
-    <section class="patients-layout" id="pacientesView" data-view="pacientes">
-      <section class="card">
-        <div class="card__header">
-          <div class="filters">
-            <div class="field">
-              <label for="patientSearchInput">Busca</label>
-              <input id="patientSearchInput" type="text" placeholder="nome, email ou telefone" />
-            </div>
-            <div class="field">
-              <label for="patientStatusSelect">Status</label>
-              <select id="patientStatusSelect">
-                <option value="">Todos</option>
-                <option value="ativo">Ativo</option>
-                <option value="inativo">Inativo</option>
-              </select>
-            </div>
-            <div class="field field--actions">
-              <button class="btn" id="patientSearchButton" type="button">Buscar</button>
-              <button class="btn btn--ghost" id="patientClearButton" type="button">Limpar</button>
-            </div>
-          </div>
+    <section class="patients" id="pacientesView" data-view="pacientes">
+      <div class="patients__header">
+        <div class="patients__title">
+          <strong>Gerenciamento de Pacientes</strong>
         </div>
-        <div class="card__body">
-          <div class="alert alert--error is-hidden" id="patientsErrorBox"></div>
-          <div class="table-wrap">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nome</th>
-                  <th>Email</th>
-                  <th>Telefone</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="patientsTableBody"></tbody>
-            </table>
-          </div>
-          <div class="pager is-hidden" id="patientsPager">
-            <button class="btn btn--ghost" id="patientsPagerPrev" type="button">Anterior</button>
-            <div class="pager__label" id="patientsPagerLabel"></div>
-            <button class="btn btn--ghost" id="patientsPagerNext" type="button">Proxima</button>
-          </div>
-          <div class="list-empty is-hidden" id="patientsEmptyState">Nenhum paciente encontrado.</div>
+        <div class="patients__actions">
+          <button class="btn" id="newPatientButton" type="button" data-bs-toggle="modal" data-bs-target="#newPatientModal">
+            Novo Paciente <i class="bi bi-person-plus" aria-hidden="true"></i>
+          </button>
         </div>
-      </section>
+      </div>
 
-      <section class="card">
-        <div class="card__header">
-          <div>
-            <strong>Novo paciente</strong>
-            <div class="muted">Cadastro via API</div>
+      <div class="patients__search">
+        <div class="searchbox">
+          <i class="bi bi-search" aria-hidden="true"></i>
+          <input id="patientSearchInput" type="search" placeholder="Pesquisar pacientes por nome, e-mail ou telefone..." />
+        </div>
+        <button class="btn btn--ghost" id="patientSearchButton" type="button" title="Buscar">
+          <i class="bi bi-sliders" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="alert alert--error is-hidden" id="patientsErrorBox"></div>
+      <div class="patients__grid" id="patientsCards"></div>
+
+      <div class="pager is-hidden" id="patientsPager">
+        <button class="btn btn--ghost" id="patientsPagerPrev" type="button">Anterior</button>
+        <div class="pager__label" id="patientsPagerLabel"></div>
+        <button class="btn btn--ghost" id="patientsPagerNext" type="button">Proxima</button>
+      </div>
+      <div class="list-empty is-hidden" id="patientsEmptyState">Nenhum paciente encontrado.</div>
+    </section>
+
+    <div class="modal fade" id="newPatientModal" tabindex="-1" aria-labelledby="newPatientModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-content--crm">
+          <div class="modal-header border-0">
+            <div>
+              <h2 class="modal-title fs-5" id="newPatientModalLabel">Novo paciente</h2>
+              <div class="muted">Cadastro via API</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body pt-0">
+            <div class="alert alert--error is-hidden" id="patientFormError"></div>
+            <form class="form-grid" id="patientCreateForm">
+              <div class="field field--span-2">
+                <label for="patientCreateNome">Nome</label>
+                <input id="patientCreateNome" type="text" required />
+              </div>
+              <div class="field">
+                <label for="patientCreateEmail">Email</label>
+                <input id="patientCreateEmail" type="email" />
+              </div>
+              <div class="field">
+                <label for="patientCreateTelefone">Telefone</label>
+                <input id="patientCreateTelefone" type="text" />
+              </div>
+              <div class="field">
+                <label for="patientCreateNascimento">Data de nascimento</label>
+                <input id="patientCreateNascimento" type="date" />
+              </div>
+              <div class="field">
+                <label for="patientCreateStatus">Status</label>
+                <select id="patientCreateStatus">
+                  <option value="ativo">Ativo</option>
+                  <option value="inativo">Inativo</option>
+                </select>
+              </div>
+              <div class="field field--span-2">
+                <label for="patientCreateObservacoes">Observacoes</label>
+                <textarea id="patientCreateObservacoes" rows="5"></textarea>
+              </div>
+              <div class="field field--actions field--span-2">
+                <button class="btn" id="patientCreateButton" type="submit">Cadastrar</button>
+                <button class="btn btn--ghost" type="button" data-bs-dismiss="modal">Cancelar</button>
+              </div>
+            </form>
           </div>
         </div>
-        <div class="card__body">
-          <div class="alert alert--error is-hidden" id="patientFormError"></div>
-          <form class="form-grid" id="patientCreateForm">
-            <div class="field field--span-2">
-              <label for="patientCreateNome">Nome</label>
-              <input id="patientCreateNome" type="text" required />
-            </div>
-            <div class="field">
-              <label for="patientCreateEmail">Email</label>
-              <input id="patientCreateEmail" type="email" />
-            </div>
-            <div class="field">
-              <label for="patientCreateTelefone">Telefone</label>
-              <input id="patientCreateTelefone" type="text" />
-            </div>
-            <div class="field">
-              <label for="patientCreateNascimento">Data de nascimento</label>
-              <input id="patientCreateNascimento" type="date" />
-            </div>
-            <div class="field">
-              <label for="patientCreateStatus">Status</label>
-              <select id="patientCreateStatus">
-                <option value="ativo">Ativo</option>
-                <option value="inativo">Inativo</option>
-              </select>
-            </div>
-            <div class="field field--span-2">
-              <label for="patientCreateObservacoes">Observacoes</label>
-              <textarea id="patientCreateObservacoes" rows="5"></textarea>
-            </div>
-            <div class="field field--actions">
-              <button class="btn" id="patientCreateButton" type="submit">Cadastrar</button>
-            </div>
-          </form>
-        </div>
-      </section>
-    </section>
+      </div>
+    </div>
 
     <section class="card is-hidden" id="pacientePerfilView" data-view="pacientePerfil">
       <div class="card__header card__header--split">

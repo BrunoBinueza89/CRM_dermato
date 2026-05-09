@@ -37,6 +37,7 @@ O sistema é estruturado em módulos independentes porém integrados, acessívei
 - [x] Terminar frontend (checklist abaixo)
 - [x] Corrigir cores do design
 - [x] Implementar design e funcionalidades baseado no arquivo em screens
+- [x] Modificar e usar o design e funcionalidade da area de pacientes se basendo na imagem screens/pacientes_01.png
 
 ### Checklist - Terminar backend
 - [x] Padronizar erros: formato consistente `{ message, details? }` e status codes por caso
@@ -81,6 +82,7 @@ O sistema é estruturado em módulos independentes porém integrados, acessívei
 - 2026-05-06: UI de Faturamento ganhou remoção de faturas via `DELETE /faturamento/:id`.
 - 2026-05-08: Paleta do frontend alinhada ao `design.md` via variáveis CSS (`--primary`/`--secondary`) e substituição de cores hardcoded por `rgba(var(--primary-rgb), …)` em componentes principais.
 - 2026-05-09: Dashboard alinhado ao `screens/dashboard_01.png`: adicionados `topbar` e novo layout de KPIs/gráfico/alerta de estoque; backend `/dashboard` ganhou `kpisV2` e `stockAlerts` para suportar a nova UI.
+- 2026-05-09: Pacientes alinhado ao `screens/pacientes_01.png`: listagem mudou de tabela para cards com busca + modal de criação; backend `GET /pacientes` passou a incluir `ultima_consulta`/`proxima_consulta` para exibir datas no card.
 
 ## Outcomes & Retrospective
 - Não foi registrado nada
@@ -153,6 +155,12 @@ O sistema deve ter telas parecidas com as imagens da pasta screens, mantendo boa
   - Commit: `6cad29e` (Dashboard: alinhar UI ao screens e adicionar alertas de estoque)
 - 2026-05-09: Comandos executados:
   - `npm run smoke:test` (OK)
+- 2026-05-09: Pacientes alinhado ao `screens/pacientes_01.png`:
+  - Backend: `backend/src/controller/pacientesController.js` (lista inclui `ultima_consulta`/`proxima_consulta`)
+  - Frontend: `frontend/js/pageTemplates.js`, `frontend/js/views/pacientesView.js`, `frontend/styles.css` (cards + busca + modal de criação)
+  - Docs: `API.md` (nota sobre campos extras na listagem)
+  - Comandos executados:
+    - `npm run smoke:test` (OK)
 - 2026-05-06: Backend movido para `backend/` (inclui `backend/app.js`, `backend/server.js`, `backend/connection.js`, `backend/src/*`, `backend/scripts/*`, `backend/migrations.sql`, `backend/seeders.sql`).
 - 2026-05-06: `package.json` atualizado para usar scripts `backend/*`.
 - 2026-05-06: `INSTRUCOES_EXECUCAO.md` atualizado para refletir a nova estrutura e DB padrão (`clinica_dermato_crm2`).

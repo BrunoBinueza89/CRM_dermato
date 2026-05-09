@@ -57,6 +57,8 @@ function buildPacientePayload(row) {
     observacoes: row.observacoes,
     status: row.status,
     created_at: row.created_at,
+    ultima_consulta: row.ultima_consulta ?? null,
+    proxima_consulta: row.proxima_consulta ?? null,
   };
 }
 
@@ -69,17 +71,39 @@ async function list(req, res) {
 
   try {
     const baseWhere = `
-WHERE (nome LIKE ? OR email LIKE ? OR telefone LIKE ?)
-  AND (? = '' OR status = ?)
+WHERE (p.nome LIKE ? OR p.email LIKE ? OR p.telefone LIKE ?)
+  AND (? = '' OR p.status = ?)
     `.trim();
 
     if (!pagination) {
       const [rows] = await pool.execute(
         `
-SELECT id, nome, email, telefone, data_nascimento, observacoes, status, created_at
-FROM pacientes
+SELECT
+  p.id,
+  p.nome,
+  p.email,
+  p.telefone,
+  p.data_nascimento,
+  p.observacoes,
+  p.status,
+  p.created_at,
+  (
+    SELECT MAX(c.data_hora)
+    FROM consultas c
+    WHERE c.paciente_id = p.id
+      AND c.data_hora < NOW()
+      AND c.status = 'realizada'
+  ) AS ultima_consulta,
+  (
+    SELECT MIN(c.data_hora)
+    FROM consultas c
+    WHERE c.paciente_id = p.id
+      AND c.data_hora >= NOW()
+      AND c.status = 'agendada'
+  ) AS proxima_consulta
+FROM pacientes p
 ${baseWhere}
-ORDER BY nome ASC, id DESC;
+ORDER BY p.nome ASC, p.id DESC;
       `.trim(),
         [like, like, like, status, status]
       );
@@ -92,7 +116,7 @@ ORDER BY nome ASC, id DESC;
     const [[countRow]] = await pool.execute(
       `
 SELECT COUNT(*) AS total
-FROM pacientes
+FROM pacientes p
 ${baseWhere};
       `.trim(),
       [like, like, like, status, status]
@@ -103,10 +127,32 @@ ${baseWhere};
 
     const [rows] = await pool.execute(
       `
-SELECT id, nome, email, telefone, data_nascimento, observacoes, status, created_at
-FROM pacientes
+SELECT
+  p.id,
+  p.nome,
+  p.email,
+  p.telefone,
+  p.data_nascimento,
+  p.observacoes,
+  p.status,
+  p.created_at,
+  (
+    SELECT MAX(c.data_hora)
+    FROM consultas c
+    WHERE c.paciente_id = p.id
+      AND c.data_hora < NOW()
+      AND c.status = 'realizada'
+  ) AS ultima_consulta,
+  (
+    SELECT MIN(c.data_hora)
+    FROM consultas c
+    WHERE c.paciente_id = p.id
+      AND c.data_hora >= NOW()
+      AND c.status = 'agendada'
+  ) AS proxima_consulta
+FROM pacientes p
 ${baseWhere}
-ORDER BY nome ASC, id DESC
+ORDER BY p.nome ASC, p.id DESC
 LIMIT ${pagination.pageSize} OFFSET ${offset};
       `.trim(),
       [like, like, like, status, status]
