@@ -159,6 +159,7 @@ O sistema deve ter telas parecidas com as imagens da pasta screens, mantendo boa
   - Backend: `backend/src/controller/pacientesController.js` (lista inclui `ultima_consulta`/`proxima_consulta`)
   - Frontend: `frontend/js/pageTemplates.js`, `frontend/js/views/pacientesView.js`, `frontend/styles.css` (cards + busca + modal de criação)
   - Docs: `API.md` (nota sobre campos extras na listagem)
+  - Commit: `5a93461` (Pacientes: cards estilo screens + datas ultima/proxima consulta)
   - Comandos executados:
     - `npm run smoke:test` (OK)
 - 2026-05-06: Backend movido para `backend/` (inclui `backend/app.js`, `backend/server.js`, `backend/connection.js`, `backend/src/*`, `backend/scripts/*`, `backend/migrations.sql`, `backend/seeders.sql`).
